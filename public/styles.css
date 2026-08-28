@@ -156,8 +156,10 @@ header {
 }
 
 .stage-wrap {
+  display: grid;
   flex: 1;
   padding: 1rem;
+  place-items: center;
 }
 
 .stage {
@@ -165,6 +167,7 @@ header {
   min-height: 280px;
   padding: 1.25rem 1rem 2.5rem;
   position: relative;
+  width: min(100%, 960px);
 }
 
 .stage:focus {
