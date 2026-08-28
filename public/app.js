@@ -302,19 +302,19 @@ function startTestIdle() {
   const count = learnedItems().length;
   els.stageLabel.textContent = 'Test';
   els.prompt.textContent = count ? 'Test what stuck.' : 'Learn one drill first.';
-  els.hint.textContent = count ? `Up to 10 learned drills. No timer. No hints.` : 'Complete a drill in Learn mode to unlock Test.';
+  els.hint.textContent = count ? `All learned drills. No timer. No hints.` : 'Complete a drill in Learn mode to unlock Test.';
   els.commandWrap.classList.remove('hidden');
   els.bindingCapture.classList.add('hidden');
   els.commandInput.value = '';
   els.commandInput.disabled = true;
   els.typedLine.innerHTML = '';
-  els.testStatus.textContent = count ? `${Math.min(10, count)} ready` : '';
+  els.testStatus.textContent = count ? `${count} ready` : '';
   els.btnStartTest.classList.toggle('hidden', count === 0);
   els.btnStartTest.textContent = 'Start test';
 }
 
 function startTestRun() {
-  raceQueue = shuffle(learnedItems()).slice(0, 10);
+  raceQueue = shuffle(learnedItems());
   if (!raceQueue.length) return;
   raceStats = { cleared: 0, correctUnits: 0, totalUnits: 0 };
   raceIndex = 0;
