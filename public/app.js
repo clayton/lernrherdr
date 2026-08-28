@@ -16,7 +16,7 @@ import { QUIZ_ITEMS } from './quiz-data.js';
 const STORAGE_KEY = 'herdr-quiz';
 const HASH_PREFIX = 's=';
 
-/** @typedef {{ id: string, xp: number, cards: Record<string, import('./logic.js').CardState>, bestScore: number, theme: 'paper' | 'dusk', mode: 'learn' | 'race', currentId?: string }} SaveState */
+/** @typedef {{ id: string, xp: number, cards: Record<string, import('./logic.js').CardState>, bestScore: number, theme: 'paper' | 'dusk', mode: 'learn' | 'test' | 'race', currentId?: string }} SaveState */
 
 /** @returns {SaveState} */
 function defaultState() {
@@ -40,7 +40,7 @@ function sanitizeState(value) {
     cards: source.cards && typeof source.cards === 'object' ? source.cards : {},
     bestScore: Number.isFinite(source.bestScore) ? Math.max(0, Math.floor(source.bestScore)) : 0,
     theme: source.theme === 'dusk' ? 'dusk' : 'paper',
-    mode: source.mode === 'race' ? 'race' : 'learn',
+    mode: source.mode === 'race' ? 'race' : source.mode === 'test' ? 'test' : 'learn',
     currentId: QUIZ_ITEMS.some((item) => item.id === source.currentId) ? source.currentId : undefined,
   };
 }
@@ -83,6 +83,7 @@ let currentItem = null;
 /** @type {KeyboardEvent[]} */
 let bindingEvents = [];
 let raceTimer = 0;
+let testActive = false;
 let raceEndsAt = 0;
 let raceIndex = 0;
 let raceLastLength = 0;
@@ -94,6 +95,7 @@ const els = {
   rankLine: document.getElementById('rank-line'),
   xpFill: document.getElementById('xp-fill'),
   modeLearn: document.getElementById('mode-learn'),
+  modeTest: document.getElementById('mode-test'),
   modeRace: document.getElementById('mode-race'),
   themeBtn: document.getElementById('theme-btn'),
   copyLink: document.getElementById('copy-link'),
@@ -109,9 +111,13 @@ const els = {
   raceClock: document.getElementById('race-clock'),
   btnAgain: document.getElementById('btn-again'),
   btnSkip: document.getElementById('btn-skip'),
+  btnStartTest: document.getElementById('btn-start-test'),
   btnStartRace: document.getElementById('btn-start-race'),
+  shareRace: document.getElementById('share-race'),
   learnFooter: document.getElementById('learn-footer'),
+  testFooter: document.getElementById('test-footer'),
   raceFooter: document.getElementById('race-footer'),
+  testStatus: document.getElementById('test-status'),
   live: document.getElementById('live'),
 };
 
@@ -140,15 +146,18 @@ function pickLearnItem() {
   return [...pool].sort((a, b) => (state.cards[a.id]?.due ?? 0) - (state.cards[b.id]?.due ?? 0))[0];
 }
 
-/** @param {'learn' | 'race'} mode */
+/** @param {'learn' | 'test' | 'race'} mode */
 function setMode(mode) {
   state.mode = mode;
   els.modeLearn.setAttribute('aria-pressed', String(mode === 'learn'));
+  els.modeTest.setAttribute('aria-pressed', String(mode === 'test'));
   els.modeRace.setAttribute('aria-pressed', String(mode === 'race'));
   els.learnFooter.classList.toggle('hidden', mode !== 'learn');
+  els.testFooter.classList.toggle('hidden', mode !== 'test');
   els.raceFooter.classList.toggle('hidden', mode !== 'race');
   saveState(state);
   if (mode === 'learn') startLearn();
+  else if (mode === 'test') startTestIdle();
   else startRaceIdle();
 }
 
@@ -199,6 +208,10 @@ function answerText(item) {
 }
 
 function renderBindingCapture() {
+  if (state.mode !== 'learn') {
+    els.bindingCapture.textContent = 'waiting for chord…';
+    return;
+  }
   const steps = parseAnswerChord(currentItem.answer);
   const labels = bindingLabels(currentItem.answer);
   els.bindingCapture.innerHTML = labels.map((label, index) => {
@@ -212,6 +225,7 @@ function renderBindingCapture() {
 function onBindingKey(event) {
   if (!currentItem || currentItem.kind !== 'binding') return;
   if (state.mode === 'race' && !raceTimer) return;
+  if (state.mode === 'test' && !testActive) return;
   if (event.target instanceof Element && event.target.closest('button, input, a')) return;
   if (['Control', 'Shift', 'Alt', 'Meta'].includes(event.key)) return;
   const steps = parseAnswerChord(currentItem.answer);
@@ -219,7 +233,8 @@ function onBindingKey(event) {
   event.preventDefault();
   const step = steps[bindingEvents.length];
   const matches = keyEventMatchesStep(step, event);
-  if (state.mode === 'race') raceStats.totalUnits += 1;
+  const challenge = state.mode !== 'learn';
+  if (challenge) raceStats.totalUnits += 1;
   if (!matches) {
     bindingEvents = [];
     renderBindingCapture();
@@ -227,10 +242,10 @@ function onBindingKey(event) {
     return;
   }
   bindingEvents.push(event);
-  if (state.mode === 'race') raceStats.correctUnits += 1;
+  if (challenge) raceStats.correctUnits += 1;
   renderBindingCapture();
   if (bindingEvents.length < steps.length) return;
-  if (state.mode === 'race') clearRaceItem(answerText(currentItem).length);
+  if (challenge) clearRaceItem(answerText(currentItem).length);
   else gradeLearn('keep');
 }
 
@@ -277,6 +292,37 @@ function skipLearn() {
   startLearn();
 }
 
+function learnedItems() {
+  return unlockedItems(QUIZ_ITEMS, state.xp).filter((item) => state.cards[item.id]);
+}
+
+function startTestIdle() {
+  clearRace();
+  currentItem = null;
+  const count = learnedItems().length;
+  els.stageLabel.textContent = 'Test';
+  els.prompt.textContent = count ? 'Test what stuck.' : 'Learn one drill first.';
+  els.hint.textContent = count ? `Up to 10 learned drills. No timer. No hints.` : 'Complete a drill in Learn mode to unlock Test.';
+  els.commandWrap.classList.remove('hidden');
+  els.bindingCapture.classList.add('hidden');
+  els.commandInput.value = '';
+  els.commandInput.disabled = true;
+  els.typedLine.innerHTML = '';
+  els.testStatus.textContent = count ? `${Math.min(10, count)} ready` : '';
+  els.btnStartTest.classList.toggle('hidden', count === 0);
+  els.btnStartTest.textContent = 'Start test';
+}
+
+function startTestRun() {
+  raceQueue = shuffle(learnedItems()).slice(0, 10);
+  if (!raceQueue.length) return;
+  raceStats = { cleared: 0, correctUnits: 0, totalUnits: 0 };
+  raceIndex = 0;
+  testActive = true;
+  els.btnStartTest.classList.add('hidden');
+  showRaceItem();
+}
+
 function startRaceIdle() {
   clearRace();
   currentItem = null;
@@ -291,6 +337,8 @@ function startRaceIdle() {
   els.status.textContent = '';
   els.raceClock.textContent = '';
   els.btnStartRace.classList.remove('hidden');
+  els.btnStartRace.textContent = 'Start 60s';
+  els.shareRace.classList.add('hidden');
 }
 
 function startRaceRun() {
@@ -311,9 +359,9 @@ function showRaceItem() {
   bindingEvents = [];
   raceLastLength = 0;
   els.prompt.textContent = currentItem.prompt;
-  els.hint.textContent = currentItem.kind === 'binding'
-    ? 'Execute the chord. Do not type its name.'
-    : 'Type the command.';
+  els.hint.textContent = state.mode === 'test'
+    ? 'No hints. Take your time.'
+    : currentItem.kind === 'binding' ? 'Execute the chord.' : 'Type the command.';
   showInputForCurrent();
   saveState(state);
 }
@@ -326,8 +374,9 @@ function tickRace() {
   if (left <= 0) finishRace();
 }
 
-function onRaceInput() {
-  if (state.mode !== 'race' || !currentItem || !raceTimer || currentItem.kind !== 'command') return;
+function onChallengeInput() {
+  const active = state.mode === 'race' ? raceTimer : state.mode === 'test' && testActive;
+  if (!active || !currentItem || currentItem.kind !== 'command') return;
   renderCommandTyped();
   const typed = els.commandInput.value;
   raceStats.totalUnits += Math.max(0, typed.length - raceLastLength);
@@ -338,9 +387,26 @@ function onRaceInput() {
 function clearRaceItem(units) {
   raceStats.cleared += 1;
   if (currentItem.kind === 'command') raceStats.correctUnits += units;
-  state.xp += xpForChars(units);
-  renderMeta();
-  showRaceItem();
+  if (state.mode === 'race') {
+    state.xp += xpForChars(units);
+    renderMeta();
+  }
+  if (state.mode === 'test' && raceStats.cleared >= raceQueue.length) finishTest();
+  else showRaceItem();
+}
+
+function finishTest() {
+  testActive = false;
+  const clean = accuracy(raceStats.correctUnits, raceStats.totalUnits);
+  els.commandInput.disabled = true;
+  els.commandWrap.classList.remove('hidden');
+  els.bindingCapture.classList.add('hidden');
+  els.prompt.textContent = `Test complete · ${clean}% clean.`;
+  els.hint.textContent = `${raceStats.cleared} learned drills tested.`;
+  els.live.textContent = `Test complete. ${clean}% clean.`;
+  els.testStatus.textContent = `${raceStats.cleared}/${raceQueue.length} cleared`;
+  els.btnStartTest.classList.remove('hidden');
+  els.btnStartTest.textContent = 'Test again';
 }
 
 function finishRace() {
@@ -355,6 +421,10 @@ function finishRace() {
   els.prompt.textContent = `${raceStats.cleared} cleared · ${clean}% clean.`;
   els.hint.textContent = `Best is ${state.bestScore}.`;
   els.live.textContent = `${raceStats.cleared} cleared, ${clean}% clean. Best is ${state.bestScore}.`;
+  const text = `I cleared ${raceStats.cleared} Herdr drills in 60 seconds with ${clean}% accuracy. Beat that.`;
+  const url = `${location.origin}${location.pathname}`;
+  els.shareRace.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+  els.shareRace.classList.remove('hidden');
   els.btnStartRace.classList.remove('hidden');
   els.btnStartRace.textContent = 'Race again';
 }
@@ -362,6 +432,7 @@ function finishRace() {
 function clearRace() {
   if (raceTimer) window.clearInterval(raceTimer);
   raceTimer = 0;
+  testActive = false;
 }
 
 function shuffle(items) {
@@ -387,6 +458,7 @@ function init() {
   applyTheme();
   renderMeta();
   els.modeLearn.addEventListener('click', () => setMode('learn'));
+  els.modeTest.addEventListener('click', () => setMode('test'));
   els.modeRace.addEventListener('click', () => setMode('race'));
   els.themeBtn.addEventListener('click', () => {
     state.theme = state.theme === 'dusk' ? 'paper' : 'dusk';
@@ -396,10 +468,11 @@ function init() {
   els.copyLink.addEventListener('click', () => { copyRecoveryLink().catch(() => { els.live.textContent = 'Copy failed. Bookmark this page instead.'; }); });
   els.btnAgain.addEventListener('click', () => gradeLearn('again'));
   els.btnSkip.addEventListener('click', skipLearn);
+  els.btnStartTest.addEventListener('click', startTestRun);
   els.btnStartRace.addEventListener('click', startRaceRun);
   els.commandInput.addEventListener('input', () => {
     if (state.mode === 'learn') renderCommandTyped();
-    else onRaceInput();
+    else onChallengeInput();
   });
   window.addEventListener('keydown', onBindingKey);
   setMode(state.mode);

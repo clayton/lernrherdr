@@ -20,6 +20,7 @@
             </div>
             <div class="mode-switch" role="group" aria-label="Mode">
               <button type="button" id="mode-learn" aria-pressed="true">Learn</button>
+              <button type="button" id="mode-test" aria-pressed="false">Test</button>
               <button type="button" id="mode-race" aria-pressed="false">Race</button>
             </div>
             <button type="button" class="theme-btn" id="copy-link">Copy save link</button>
@@ -58,9 +59,17 @@
           <div class="status" id="status"></div>
         </footer>
 
+        <footer id="test-footer" class="hidden">
+          <div class="footer-actions">
+            <button type="button" class="btn" id="btn-start-test">Start test</button>
+          </div>
+          <div class="status" id="test-status"></div>
+        </footer>
+
         <footer id="race-footer" class="hidden">
           <div class="footer-actions">
             <button type="button" class="btn" id="btn-start-race">Start 60s</button>
+            <a class="btn hidden" id="share-race" target="_blank" rel="noopener noreferrer">Share on X</a>
           </div>
           <div class="status" id="race-clock"></div>
         </footer>

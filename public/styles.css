@@ -131,15 +131,19 @@ header {
 .mode-switch button,
 .btn,
 .theme-btn {
+  align-items: center;
   background: transparent;
   border: 1px solid var(--rule);
   color: var(--ink);
   cursor: pointer;
+  display: inline-flex;
   font: inherit;
+  justify-content: center;
   letter-spacing: inherit;
   min-height: 44px;
   min-width: 44px;
   padding: 0.35rem 0.75rem;
+  text-decoration: none;
 }
 
 .mode-switch button[aria-pressed="true"] {

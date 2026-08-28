@@ -1,6 +1,6 @@
 # herdr keys
 
-Static trainer for stock Herdr 0.8.2 key chords and CLI commands. Learn mode uses spaced repetition and XP unlocks. Race mode is a 60 second sprint with real chord capture. Progress stays in `localStorage`; the URL hash carries a portable save.
+Static trainer for stock Herdr 0.8.2 key chords and CLI commands. Learn uses spaced repetition and XP unlocks. Test checks up to 10 learned drills without hints. Race is a 60 second sprint with shareable results. Progress stays in `localStorage`; the URL hash carries a portable save.
 
 ## Local
 
