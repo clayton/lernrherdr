@@ -1,6 +1,6 @@
 /** @type {import('./logic.js').QuizItem[]} */
 export const QUIZ_ITEMS = [
-  { id: 'prefix', prompt: 'Enter prefix mode (Herdr default super key)', answer: 'prefix', kind: 'binding', difficulty: 'easy' },
+  { id: 'prefix', prompt: 'Enter Herdr prefix mode', answer: 'prefix', kind: 'binding', difficulty: 'easy' },
   { id: 'detach', prompt: 'Detach from Herdr in server mode', answer: 'prefix+q', kind: 'binding', difficulty: 'easy' },
   { id: 'help', prompt: 'Open in-app keybind help', answer: 'prefix+?', kind: 'binding', difficulty: 'easy' },
   { id: 'settings', prompt: 'Open Herdr settings', answer: 'prefix+s', kind: 'binding', difficulty: 'easy' },
