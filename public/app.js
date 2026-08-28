@@ -10,6 +10,7 @@ import {
   unlockedItems,
   updateCard,
   xpForChars,
+  persistPortableSave,
 } from './logic.js';
 import { QUIZ_ITEMS } from './quiz-data.js';
 
@@ -56,13 +57,8 @@ function readHashState() {
   }
 }
 
-/** @param {SaveState} value */
-function encodeState(value) {
-  return btoa(JSON.stringify(value)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-}
-
 /** @returns {SaveState} */
-function loadState() {
+function loadStateFromSources() {
   try {
     return sanitizeState(readHashState() ?? JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null'));
   } catch {
@@ -72,12 +68,23 @@ function loadState() {
 
 /** @param {SaveState} value */
 function saveState(value) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
-  history.replaceState(null, '', `#${HASH_PREFIX}${encodeState(value)}`);
+  persistPortableSave(value, (encoded) => {
+    history.replaceState(null, '', `#${HASH_PREFIX}${encoded}`);
+  }, (json) => {
+    localStorage.setItem(STORAGE_KEY, json);
+  });
+}
+
+function applyHashState() {
+  if (!location.hash.startsWith(`#${HASH_PREFIX}`)) return;
+  state = loadStateFromSources();
+  applyTheme();
+  renderMeta();
+  setMode(state.mode);
 }
 
 /** @type {SaveState} */
-let state = loadState();
+let state = loadStateFromSources();
 /** @type {import('./logic.js').QuizItem | null} */
 let currentItem = null;
 /** @type {KeyboardEvent[]} */
@@ -475,6 +482,7 @@ function init() {
     else onChallengeInput();
   });
   window.addEventListener('keydown', onBindingKey);
+  window.addEventListener('hashchange', applyHashState);
   setMode(state.mode);
 }
 

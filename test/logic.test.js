@@ -12,6 +12,8 @@ import {
   keyEventMatchesStep,
   dueItems,
   nextKeepInterval,
+  encodePortableState,
+  persistPortableSave,
 } from '../public/logic.js';
 
 test('rankForXp maps xp to Herdr lifecycle names', () => {
@@ -108,4 +110,17 @@ test('accuracy stays bounded', () => {
   assert.equal(accuracy(300, 320), 94);
   assert.equal(accuracy(10, 5), 100);
   assert.equal(accuracy(0, 0), 0);
+});
+
+test('persistPortableSave writes hash before storage and survives storage failure', () => {
+  const value = { id: 'abc', xp: 12, cards: {}, bestScore: 0, theme: 'paper', mode: 'learn' };
+  let hash = '';
+  let stored = '';
+  persistPortableSave(value, (encoded) => { hash = encoded; }, (json) => { stored = json; });
+  assert.equal(hash, encodePortableState(value));
+  assert.equal(stored, JSON.stringify(value));
+
+  let hashOnly = '';
+  persistPortableSave(value, (encoded) => { hashOnly = encoded; }, () => { throw new Error('quota'); });
+  assert.equal(hashOnly, encodePortableState(value));
 });

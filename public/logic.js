@@ -120,3 +120,18 @@ export function dueItems(items, cards, now = Date.now()) {
 export function accuracy(correct, total) {
   return total > 0 ? Math.min(100, Math.round((correct / total) * 100)) : 0;
 }
+
+/** @param {unknown} value */
+export function encodePortableState(value) {
+  return btoa(JSON.stringify(value)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+/** @param {unknown} value @param {(hash: string) => void} writeHash @param {(json: string) => void} writeStorage */
+export function persistPortableSave(value, writeHash, writeStorage) {
+  writeHash(encodePortableState(value));
+  try {
+    writeStorage(JSON.stringify(value));
+  } catch {
+    // ponytail: hash wins when localStorage is blocked or full
+  }
+}
