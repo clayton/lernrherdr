@@ -1,0 +1,11 @@
+{
+  "name": "lernrherdr",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "lint": "node scripts/lint.mjs",
+    "complexity": "node scripts/check-complexity.mjs",
+    "check": "npm run lint && npm run complexity && npm test"
+  }
+}

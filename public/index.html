@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en" data-theme="paper">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Learn default Herdr key chords and CLI commands." />
+    <title>herdr keys</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <div class="gutter" aria-hidden="true"></div>
+      <div class="main">
+        <header>
+          <div class="wordmark">herdr keys</div>
+          <div class="meta">
+            <div>
+              <div class="rank-line" id="rank-line">rank 1 · idle · 0xp</div>
+              <div class="xp-track" aria-hidden="true"><div class="xp-fill" id="xp-fill"></div></div>
+            </div>
+            <div class="mode-switch" role="group" aria-label="Mode">
+              <button type="button" id="mode-learn" aria-pressed="true">Learn</button>
+              <button type="button" id="mode-race" aria-pressed="false">Race</button>
+            </div>
+            <button type="button" class="theme-btn" id="copy-link">Copy save link</button>
+            <button type="button" class="theme-btn" id="theme-btn" aria-label="Toggle theme">Dusk</button>
+          </div>
+        </header>
+
+        <div class="stage-wrap">
+          <section class="stage" aria-labelledby="stage-label" tabindex="-1">
+            <p class="stage-label" id="stage-label">Type this.</p>
+            <h1 class="prompt" id="prompt">Focus pane to the left</h1>
+            <p class="hint" id="hint">Press the default Herdr chord (prefix is Ctrl+B).</p>
+
+            <div id="binding-capture" class="key-capture hidden" aria-live="off"></div>
+
+            <div id="command-wrap">
+              <label class="hidden" for="command-input">Command entry</label>
+              <input
+                id="command-input"
+                class="stage-input"
+                type="text"
+                spellcheck="false"
+                autocapitalize="off"
+                autocomplete="off"
+              />
+              <div id="typed-line" class="typed-line" aria-hidden="true"></div>
+            </div>
+          </section>
+        </div>
+
+        <footer id="learn-footer">
+          <div class="footer-actions">
+            <button type="button" class="btn" id="btn-again">Again</button>
+            <button type="button" class="btn hidden" id="btn-keep">Keep</button>
+            <button type="button" class="btn" id="btn-skip">Skip</button>
+          </div>
+          <div class="status" id="status"></div>
+        </footer>
+
+        <footer id="race-footer" class="hidden">
+          <div class="footer-actions">
+            <button type="button" class="btn" id="btn-start-race">Start 60s</button>
+          </div>
+          <div class="status" id="race-clock"></div>
+        </footer>
+
+        <p id="live" class="sr-live" aria-live="polite"></p>
+
+        <div class="site-footer">
+          Built for stock Herdr 0.8.2 defaults ·
+          <a href="https://x.com/claytonlz" rel="noopener noreferrer">@claytonlz</a>
+          ·
+          <a href="https://labountylabs.com" rel="noopener noreferrer">labountylabs.com</a>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
