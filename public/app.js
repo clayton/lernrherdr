@@ -108,7 +108,6 @@ const els = {
   status: document.getElementById('status'),
   raceClock: document.getElementById('race-clock'),
   btnAgain: document.getElementById('btn-again'),
-  btnKeep: document.getElementById('btn-keep'),
   btnSkip: document.getElementById('btn-skip'),
   btnStartRace: document.getElementById('btn-start-race'),
   learnFooter: document.getElementById('learn-footer'),
@@ -165,7 +164,6 @@ function startLearn() {
     ? 'Press the stock Herdr chord. Prefix is Ctrl+B.'
     : 'Type the exact Herdr CLI line.';
   els.btnAgain.classList.remove('hidden');
-  els.btnKeep.classList.add('hidden');
   els.btnSkip.classList.remove('hidden');
   els.status.textContent = state.cards[currentItem.id] ? formatDue(state.cards[currentItem.id].due) : '';
   showInputForCurrent();
@@ -232,12 +230,8 @@ function onBindingKey(event) {
   if (state.mode === 'race') raceStats.correctUnits += 1;
   renderBindingCapture();
   if (bindingEvents.length < steps.length) return;
-  if (state.mode === 'race') {
-    clearRaceItem(answerText(currentItem).length);
-  } else {
-    els.btnKeep.classList.remove('hidden');
-    els.live.textContent = 'Chord matched. Keep it or mark it Again.';
-  }
+  if (state.mode === 'race') clearRaceItem(answerText(currentItem).length);
+  else gradeLearn('keep');
 }
 
 function renderCommandTyped() {
@@ -248,10 +242,7 @@ function renderCommandTyped() {
     html += `<span class="${expected[index] === typed[index] ? 'ok' : 'bad'}">${escapeHtml(typed[index])}</span>`;
   }
   els.typedLine.innerHTML = `${html}<span class="caret" aria-hidden="true"></span>`;
-  if (state.mode === 'learn' && commandMatches(typed, expected)) {
-    els.btnKeep.classList.remove('hidden');
-    els.live.textContent = 'Command matched. Keep it or mark it Again.';
-  }
+  if (state.mode === 'learn' && commandMatches(typed, expected)) gradeLearn('keep');
 }
 
 function escapeHtml(text) {
@@ -404,7 +395,6 @@ function init() {
   });
   els.copyLink.addEventListener('click', () => { copyRecoveryLink().catch(() => { els.live.textContent = 'Copy failed. Bookmark this page instead.'; }); });
   els.btnAgain.addEventListener('click', () => gradeLearn('again'));
-  els.btnKeep.addEventListener('click', () => gradeLearn('keep'));
   els.btnSkip.addEventListener('click', skipLearn);
   els.btnStartRace.addEventListener('click', startRaceRun);
   els.commandInput.addEventListener('input', () => {
