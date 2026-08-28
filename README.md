@@ -27,7 +27,7 @@ npm run check
 npx wrangler@latest deploy
 ```
 
-This uses Workers Static Assets, the current Cloudflare path for new static sites. It serves from `*.workers.dev` with no custom domain.
+This uses Workers Static Assets at [lernrherdr.dev](https://lernrherdr.dev). The `*.workers.dev` address remains available as a fallback.
 
 ## Notes
 

@@ -2,6 +2,13 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "lernrherdr",
   "compatibility_date": "2026-08-28",
+  "workers_dev": true,
+  "routes": [
+    {
+      "pattern": "lernrherdr.dev",
+      "custom_domain": true
+    }
+  ],
   "assets": {
     "directory": "./public"
   }

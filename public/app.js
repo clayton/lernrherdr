@@ -422,7 +422,7 @@ function finishRace() {
   els.hint.textContent = `Best is ${state.bestScore}.`;
   els.live.textContent = `${raceStats.cleared} cleared, ${clean}% clean. Best is ${state.bestScore}.`;
   const text = `I cleared ${raceStats.cleared} Herdr drills in 60 seconds with ${clean}% accuracy. Beat that.`;
-  const url = `${location.origin}${location.pathname}`;
+  const url = 'https://lernrherdr.dev/';
   els.shareRace.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
   els.shareRace.classList.remove('hidden');
   els.btnStartRace.classList.remove('hidden');
